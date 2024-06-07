@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go WebSocket Chat</title>
+</head>
+<body>
+    <h1>Go WebSocket Chat</h1>
+    <div id="chat-log"></div>
+    <form id="chat-form">
+        <input id="username" type="text" placeholder="Username" required />
+        <input id="message" type="text" placeholder="Message" required />
+        <button type="submit">Send</button>
+    </form>
+    <button id="dump-button">Dump Chat Log</button>
+    <div id="dump-message"></div>
+
+    <script>
+        const chatLog = document.getElementById('chat-log');
+        const chatForm = document.getElementById('chat-form');
+        const usernameInput = document.getElementById('username');
+        const messageInput = document.getElementById('message');
+        const dumpButton = document.getElementById('dump-button');
+        const dumpMessage = document.getElementById('dump-message');
+
+        const ws = new WebSocket('ws://localhost:8000/ws');
+
+        ws.onmessage = function(event) {
+            const msg = JSON.parse(event.data);
+            const item = document.createElement('div');
+            item.textContent = `${msg.username}: ${msg.message}`;
+            chatLog.appendChild(item);
+        };
+
+        chatForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const msg = {
+                username: usernameInput.value,
+                message: messageInput.value
+            };
+            ws.send(JSON.stringify(msg));
+            messageInput.value = '';
+        });
+
+        dumpButton.addEventListener('click', function() {
+            fetch('/dump')
+                .then(response => response.json())
+                .then(data => {
+                    dumpMessage.textContent = data.message;
+                })
+                .catch(error => {
+                    dumpMessage.textContent = 'Failed to dump chat log';
+                    console.error('Error:', error);
+                });
+        });
+    </script>
+</body>
+</html>
