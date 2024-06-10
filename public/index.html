@@ -13,7 +13,7 @@
         <input id="message" type="text" placeholder="Message" required />
         <button type="submit">Send</button>
     </form>
-    <button id="dump-button">Dump Chat Log</button>
+    <button id="dump">Dump</button>
     <div id="dump-message"></div>
 
     <script>
@@ -21,7 +21,7 @@
         const chatForm = document.getElementById('chat-form');
         const usernameInput = document.getElementById('username');
         const messageInput = document.getElementById('message');
-        const dumpButton = document.getElementById('dump-button');
+        const dumpButton = document.getElementById('dump');
         const dumpMessage = document.getElementById('dump-message');
 
         const ws = new WebSocket('ws://localhost:8000/ws');
@@ -45,13 +45,25 @@
 
         dumpButton.addEventListener('click', function() {
             fetch('/dump')
-                .then(response => response.json())
-                .then(data => {
-                    dumpMessage.textContent = data.message;
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = 'chat_dump.json';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
                 })
                 .catch(error => {
-                    dumpMessage.textContent = 'Failed to dump chat log';
                     console.error('Error:', error);
+                    alert('Failed to dump and download chat log');
                 });
         });
     </script>
