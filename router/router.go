@@ -9,7 +9,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{}
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 func NewRouter() *mux.Router {
 	r := mux.NewRouter()
@@ -24,6 +28,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer ws.Close()
 
 	service.RegisterClient(ws)

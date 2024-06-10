@@ -24,7 +24,8 @@
         const dumpButton = document.getElementById('dump');
         const dumpMessage = document.getElementById('dump-message');
 
-        const ws = new WebSocket('ws://localhost:8000/ws');
+        const ws = new WebSocket('wss://' + window.location.host + '/ws');
+
 
         ws.onmessage = function(event) {
             const msg = JSON.parse(event.data);
@@ -42,6 +43,8 @@
             ws.send(JSON.stringify(msg));
             messageInput.value = '';
         });
+
+
 
         dumpButton.addEventListener('click', function() {
             fetch('/dump')
