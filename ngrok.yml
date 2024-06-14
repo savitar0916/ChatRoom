@@ -1,9 +1,9 @@
 version: 2
 authtoken: 1jXYTMsMqWH0pAI64IAICyapotJ_3M8P8wXBxC5pGictV2qou
 tunnels:
-  first:
-    proto: http
-    addr: 5000
-  second:
+  httpbin:
     proto: http
     addr: 8000
+  demo:
+    proto: http
+    addr: 5000
