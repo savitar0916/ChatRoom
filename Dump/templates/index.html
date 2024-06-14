@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Log Viewer</title>
+</head>
+<body>
+    <h1>Chat Viewer</h1>
+    <div id="chat-log"></div>
+    <button id="load-chat">Dump</button>
+    <div id="load-message"></div>
+
+    <script>
+        const chatLog = document.getElementById('chat-log');
+        const loadButton = document.getElementById('load-chat');
+        const loadMessage = document.getElementById('load-message');
+
+        loadButton.addEventListener('click', function() {
+            fetch('/get_chat_log')
+                .then(response => response.json())
+                .then(data => {
+                    chatLog.innerHTML = '';
+                    data.forEach(msg => {
+                        const item = document.createElement('div');
+                        item.textContent = `${msg.username}: ${msg.message}`;
+                        chatLog.appendChild(item);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to load chat log');
+                });
+        });
+    </script>
+</body>
+</html>
