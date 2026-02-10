@@ -20,7 +20,7 @@ func (r *mysqlRepository) Create(ctx context.Context, m *domain.Message) error {
 	m.ID = uuid.NewString()
 	_, err := r.db.ExecContext(ctx,
 		"INSERT INTO messages (id, username, content) VALUES (?, ?, ?)",
-		m.Username, m.Content)
+		m.ID, m.Username, m.Content)
 	return err
 }
 
