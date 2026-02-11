@@ -10,13 +10,14 @@ import (
 
 type RouteOption struct {
 	ChatUsecase domain.ChatUsecase
+	Logger      chat.Logger
 }
 
 func NewRouter(opt RouteOption) *gin.Engine {
 	router := gin.Default()
 	chatGroup := router.Group("/chat")
 	{
-		chat.RegisterRoutes(chatGroup, opt.ChatUsecase)
+		chat.RegisterRoutes(chatGroup, opt.ChatUsecase, opt.Logger)
 	}
 
 	// 直接 serve index.html

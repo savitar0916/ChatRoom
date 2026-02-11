@@ -59,6 +59,7 @@ func startServer() {
 	// 建立 Router
 	router := chatDelivery.NewRouter(chatDelivery.RouteOption{
 		ChatUsecase: chatUsecase,
+		Logger:      cfg.Logger,
 	})
 
 	addr := fmt.Sprintf(":%d", cfg.AppConfig.Server.Port)
