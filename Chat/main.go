@@ -1,9 +1,17 @@
 package main
 
 import (
-	"ChatRoom/chat/cmd"
+    "log"
+    "net/http"
+    "ChatRoom/router"
 )
 
 func main() {
-	cmd.Execute()
+    r := router.NewRouter()
+
+    log.Println("HTTP server started on :8000")
+    err := http.ListenAndServe(":8000", r)
+    if err != nil {
+        log.Fatal("ListenAndServe: ", err)
+    }
 }

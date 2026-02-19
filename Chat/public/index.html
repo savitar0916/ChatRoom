@@ -1,68 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Go ChatRoom</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #chat-log { border: 1px solid #ccc; height: 300px; overflow-y: auto; margin-bottom: 10px; padding: 10px; }
-    .msg { margin: 5px 0; }
-    .username { font-weight: bold; margin-right: 5px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go WebSocket Chat</title>
 </head>
 <body>
-  <h1>Chat Room</h1>
+    <h1>Go WebSocket Chat</h1>
+    <div id="chat-log"></div>
+    <form id="chat-form">
+        <input id="username" type="text" placeholder="Username" required />
+        <input id="message" type="text" placeholder="Message" required />
+        <button type="submit">Send</button>
+    </form>
 
-  <div id="chat-log"></div>
+    <script>
+        const chatLog = document.getElementById('chat-log');
+        const chatForm = document.getElementById('chat-form');
+        const usernameInput = document.getElementById('username');
+        const messageInput = document.getElementById('message');
 
-  <form id="chat-form">
-    <input id="username" type="text" placeholder="Username" required />
-    <input id="message" type="text" placeholder="Message" required />
-    <button type="submit">Send</button>
-  </form>
+        const ws = new WebSocket('wss://' + window.location.host + '/ws');
 
-  <script>
-    const chatLog = document.getElementById('chat-log');
-    const chatForm = document.getElementById('chat-form');
-    const usernameInput = document.getElementById('username');
-    const messageInput = document.getElementById('message');
+        ws.onmessage = function(event) {
+            const msg = JSON.parse(event.data);
+            const item = document.createElement('div');
+            item.textContent = `${msg.username}: ${msg.message}`;
+            chatLog.appendChild(item);
+        };
 
-    // 初始化 WebSocket
-    const ws = new WebSocket(`ws://${window.location.host}/chat/ws`);
-
-    // 收到訊息時
-    ws.onmessage = function(event) {
-      const msg = JSON.parse(event.data);
-      addMessage(msg.username, msg.content);
-    };
-
-    // 發送訊息
-    chatForm.addEventListener('submit', function(event) {
-      event.preventDefault();
-      const msg = {
-        username: usernameInput.value,
-        content: messageInput.value
-      };
-      ws.send(JSON.stringify(msg));
-      messageInput.value = '';
-    });
-
-    // 加載歷史訊息
-    fetch('/chat/messages')
-      .then(res => res.json())
-      .then(data => {
-        data.reverse().forEach(m => addMessage(m.username, m.content));
-      });
-
-    // 把訊息渲染到聊天室
-    function addMessage(username, content) {
-      const div = document.createElement('div');
-      div.className = 'msg';
-      div.innerHTML = `<span class="username">${username}:</span> ${content}`;
-      chatLog.appendChild(div);
-      chatLog.scrollTop = chatLog.scrollHeight;
-    }
-  </script>
+        chatForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const msg = {
+                username: usernameInput.value,
+                message: messageInput.value
+            };
+            ws.send(JSON.stringify(msg));
+            messageInput.value = '';
+        });
+    </script>
 </body>
 </html>
