@@ -1,0 +1,37 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: chat-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: chat
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+  chat:
+    build:
+      context: .              # 用專案根目錄
+      dockerfile: Dockerfile  # 指定 Dockerfile
+    container_name: chat-service
+    restart: always
+    depends_on:
+      - mysql
+    environment:
+      SERVER_PORT: 8000
+      MYSQL_USER: chatuser
+      MYSQL_PASSWORD: chatpass
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: chat
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./chat/public:/app/public
+
+volumes:
+  mysql_data:

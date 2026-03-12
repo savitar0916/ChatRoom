@@ -1,56 +1,73 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Go WebSocket Chat</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Go ChatRoom</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #chat-log { border: 1px solid #ccc; height: 300px; overflow-y: auto; margin-bottom: 10px; padding: 10px; }
+    .msg { margin: 5px 0; }
+    .username { font-weight: bold; margin-right: 5px; }
+  </style>
 </head>
 <body>
-    <h1>Go WebSocket Chat</h1>
-    <div id="chat-log"></div>
-    <form id="chat-form">
-        <input id="username" type="text" placeholder="Username" required />
-        <input id="message" type="text" placeholder="Message" required />
-        <button type="submit">Send</button>
-    </form>
+  <h1>Chat Room</h1>
 
-    <script>
-        const chatLog = document.getElementById('chat-log');
-        const chatForm = document.getElementById('chat-form');
-        const usernameInput = document.getElementById('username');
-        const messageInput = document.getElementById('message');
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-        const ws = new WebSocket(wsProtocol + '://' + window.location.host + '/ws');
+  <div id="chat-log"></div>
 
-        function appendMessage(msg) {
-            const item = document.createElement('div');
-            item.textContent = `${msg.username}: ${msg.message}`;
-            chatLog.appendChild(item);
-        }
+  <form id="chat-form">
+    <input id="username" type="text" placeholder="Username" required />
+    <input id="message" type="text" placeholder="Message" required />
+    <button type="submit">Send</button>
+  </form>
 
-        fetch('/messages')
-            .then((response) => response.json())
-            .then((messages) => messages.forEach(appendMessage))
-            .catch((error) => console.error('failed to load messages', error));
+  <script>
+    const chatLog = document.getElementById('chat-log');
+    const chatForm = document.getElementById('chat-form');
+    const usernameInput = document.getElementById('username');
+    const messageInput = document.getElementById('message');
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
 
-        ws.onmessage = function(event) {
-            const msg = JSON.parse(event.data);
-            appendMessage(msg);
-        };
+    // 初始化 WebSocket
+    const ws = new WebSocket(`${wsProtocol}://${window.location.host}/chat/ws`);
 
-        chatForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            if (ws.readyState !== WebSocket.OPEN) {
-                return;
-            }
+    // 收到訊息時
+    ws.onmessage = function(event) {
+      const msg = JSON.parse(event.data);
+      addMessage(msg.username, msg.content);
+    };
 
-            const msg = {
-                username: usernameInput.value,
-                message: messageInput.value
-            };
-            ws.send(JSON.stringify(msg));
-            messageInput.value = '';
-        });
-    </script>
+    // 發送訊息
+    chatForm.addEventListener('submit', function(event) {
+      event.preventDefault();
+      if (ws.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      const msg = {
+        username: usernameInput.value,
+        content: messageInput.value
+      };
+      ws.send(JSON.stringify(msg));
+      messageInput.value = '';
+    });
+
+    // 加載歷史訊息
+    fetch('/chat/messages')
+      .then(res => res.json())
+      .then(data => {
+        data.reverse().forEach(m => addMessage(m.username, m.content));
+      });
+
+    // 把訊息渲染到聊天室
+    function addMessage(username, content) {
+      const div = document.createElement('div');
+      div.className = 'msg';
+      div.innerHTML = `<span class="username">${username}:</span> ${content}`;
+      chatLog.appendChild(div);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+  </script>
 </body>
 </html>
