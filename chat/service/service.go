@@ -16,9 +16,9 @@ type Message struct {
 
 var (
 	clients   = make(map[*websocket.Conn]bool)
-	broadcast = make(chan Message)
+	broadcast = make(chan Message, 32)
 	messages  []Message
-	mu        sync.Mutex
+	mu        sync.RWMutex
 )
 
 func init() {
@@ -39,31 +39,49 @@ func UnregisterClient(ws *websocket.Conn) {
 
 func BroadcastMessage(msg Message) {
 	mu.Lock()
-	defer mu.Unlock()
 	messages = append(messages, msg)
+	mu.Unlock()
+
 	broadcast <- msg
 }
 
 func handleMessages() {
 	for {
 		msg := <-broadcast
-		mu.Lock()
-		for client := range clients {
+		for _, client := range snapshotClients() {
 			err := client.WriteJSON(msg)
 			if err != nil {
 				log.Printf("error: %v", err)
 				client.Close()
-				delete(clients, client)
+				UnregisterClient(client)
 			}
 		}
-		mu.Unlock()
 	}
 }
 
 func GetMessages(w http.ResponseWriter, r *http.Request) {
-	mu.Lock()
-	defer mu.Unlock()
+	mu.RLock()
+	snapshot := append([]Message(nil), messages...)
+	mu.RUnlock()
+
+	if snapshot == nil {
+		snapshot = make([]Message, 0)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(messages)
+	if err := json.NewEncoder(w).Encode(snapshot); err != nil {
+		http.Error(w, "failed to encode messages", http.StatusInternalServerError)
+	}
+}
+
+func snapshotClients() []*websocket.Conn {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	connections := make([]*websocket.Conn, 0, len(clients))
+	for client := range clients {
+		connections = append(connections, client)
+	}
+
+	return connections
 }

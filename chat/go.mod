@@ -1,4 +1,4 @@
-module ChatRoom
+module ChatRoom/chat
 
 go 1.21.0
 

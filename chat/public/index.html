@@ -19,18 +19,31 @@
         const chatForm = document.getElementById('chat-form');
         const usernameInput = document.getElementById('username');
         const messageInput = document.getElementById('message');
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(wsProtocol + '://' + window.location.host + '/ws');
 
-        const ws = new WebSocket('wss://' + window.location.host + '/ws');
-
-        ws.onmessage = function(event) {
-            const msg = JSON.parse(event.data);
+        function appendMessage(msg) {
             const item = document.createElement('div');
             item.textContent = `${msg.username}: ${msg.message}`;
             chatLog.appendChild(item);
+        }
+
+        fetch('/messages')
+            .then((response) => response.json())
+            .then((messages) => messages.forEach(appendMessage))
+            .catch((error) => console.error('failed to load messages', error));
+
+        ws.onmessage = function(event) {
+            const msg = JSON.parse(event.data);
+            appendMessage(msg);
         };
 
         chatForm.addEventListener('submit', function(event) {
             event.preventDefault();
+            if (ws.readyState !== WebSocket.OPEN) {
+                return;
+            }
+
             const msg = {
                 username: usernameInput.value,
                 message: messageInput.value
